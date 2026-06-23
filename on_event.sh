@@ -1,42 +1,50 @@
 #!/bin/sh
-# herdr-push: push agent status to herdr-remote relay. Zero deps.
+# herdr-push: push agent status to herdr-remote relay
+# Uses standard herdr plugin environment variables
 
-# Load config from plugin config dir if HERDR_RELAY not in env
+# Load config from plugin config dir (herdr creates this)
 if [ -z "$HERDR_RELAY" ] && [ -n "$HERDR_PLUGIN_CONFIG_DIR" ] && [ -f "$HERDR_PLUGIN_CONFIG_DIR/.env" ]; then
     HERDR_RELAY=$(grep '^HERDR_RELAY=' "$HERDR_PLUGIN_CONFIG_DIR/.env" | cut -d= -f2- | tr -d '"' | tr -d "'")
     export HERDR_RELAY
 fi
 
 RELAY="${HERDR_RELAY:-}"
-EVENT="${HERDR_PLUGIN_EVENT_JSON:-{}}"
-
 [ -z "$RELAY" ] && exit 0
 
-# Parse event JSON
+# Parse HERDR_PLUGIN_EVENT_JSON (standard herdr plugin env)
+# Also merge HERDR_PLUGIN_CONTEXT_JSON for workspace/tab info
 if command -v python3 >/dev/null 2>&1; then
-    PAYLOAD=$(python3 -c "
+    PAYLOAD=$(python3 << 'EOF'
 import json, os, socket
-e = json.loads('''$EVENT''')
-d = e.get('data', {})
+
+event = json.loads(os.environ.get("HERDR_PLUGIN_EVENT_JSON", "{}"))
+context = json.loads(os.environ.get("HERDR_PLUGIN_CONTEXT_JSON", "{}"))
+data = event.get("data", {})
+
 print(json.dumps({
-    'type': 'agent_event',
-    'pane_id': d.get('pane_id', ''),
-    'status': (d.get('agent_status') or '').lower(),
-    'agent': (d.get('agent') or d.get('display_agent') or '').lower(),
-    'project': os.path.basename(d.get('cwd', '')),
-    'cwd': d.get('cwd', ''),
-    'host': socket.gethostname().split('.')[0],
+    "type": "agent_event",
+    "pane_id": data.get("pane_id", ""),
+    "status": (data.get("agent_status") or "").lower(),
+    "agent": (data.get("agent") or data.get("display_agent") or "").lower(),
+    "project": os.path.basename(data.get("cwd", "")),
+    "cwd": data.get("cwd", ""),
+    "host": socket.gethostname().split(".")[0],
+    "workspace": context.get("workspace", ""),
+    "tab": context.get("tab", ""),
+    "custom_status": data.get("custom_status", ""),
 }))
-")
+EOF
+)
 elif command -v jq >/dev/null 2>&1; then
-    PAYLOAD=$(echo "$EVENT" | jq -c '{
+    PAYLOAD=$(echo "$HERDR_PLUGIN_EVENT_JSON" | jq -c --arg host "$(hostname -s)" '{
         type: "agent_event",
         pane_id: .data.pane_id,
         status: (.data.agent_status // "" | ascii_downcase),
         agent: ((.data.agent // .data.display_agent // "") | ascii_downcase),
         project: (.data.cwd // "" | split("/") | last),
         cwd: (.data.cwd // ""),
-        host: (env.HOSTNAME // "unknown")
+        host: $host,
+        custom_status: (.data.custom_status // "")
     }')
 else
     exit 0
@@ -44,8 +52,7 @@ fi
 
 [ -z "$PAYLOAD" ] && exit 0
 
-# Send to relay (convert ws:// to http:// for POST)
+# POST to relay (convert ws:// → http:// if needed)
 HTTP_RELAY=$(echo "$RELAY" | sed 's|^ws://|http://|;s|^wss://|https://|')
 curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" --max-time 5 "$HTTP_RELAY" >/dev/null 2>&1
-
 exit 0
