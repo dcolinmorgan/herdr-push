@@ -1,11 +1,18 @@
 #!/bin/sh
 # herdr-push: push agent status to herdr-remote relay. Zero deps.
-# Env: HERDR_RELAY (http/https URL) or falls back to UDP localhost:8376
+
+# Load config from plugin config dir if HERDR_RELAY not in env
+if [ -z "$HERDR_RELAY" ] && [ -n "$HERDR_PLUGIN_CONFIG_DIR" ] && [ -f "$HERDR_PLUGIN_CONFIG_DIR/.env" ]; then
+    HERDR_RELAY=$(grep '^HERDR_RELAY=' "$HERDR_PLUGIN_CONFIG_DIR/.env" | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export HERDR_RELAY
+fi
 
 RELAY="${HERDR_RELAY:-}"
 EVENT="${HERDR_PLUGIN_EVENT_JSON:-{}}"
 
-# Parse event JSON with built-in tools (or python/jq if available)
+[ -z "$RELAY" ] && exit 0
+
+# Parse event JSON
 if command -v python3 >/dev/null 2>&1; then
     PAYLOAD=$(python3 -c "
 import json, os, socket
@@ -29,22 +36,16 @@ elif command -v jq >/dev/null 2>&1; then
         agent: ((.data.agent // .data.display_agent // "") | ascii_downcase),
         project: (.data.cwd // "" | split("/") | last),
         cwd: (.data.cwd // ""),
-        host: env.HOSTNAME
+        host: (env.HOSTNAME // "unknown")
     }')
 else
-    # Minimal fallback — no JSON parser available
     exit 0
 fi
 
 [ -z "$PAYLOAD" ] && exit 0
 
-# Send to relay
-if echo "$RELAY" | grep -qE '^https?://'; then
-    curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" --max-time 5 "$RELAY" >/dev/null 2>&1
-elif [ -n "$RELAY" ]; then
-    # WebSocket URL — convert to HTTP
-    HTTP_RELAY=$(echo "$RELAY" | sed 's|^ws://|http://|;s|^wss://|https://|')
-    curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" --max-time 5 "$HTTP_RELAY" >/dev/null 2>&1
-fi
+# Send to relay (convert ws:// to http:// for POST)
+HTTP_RELAY=$(echo "$RELAY" | sed 's|^ws://|http://|;s|^wss://|https://|')
+curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" --max-time 5 "$HTTP_RELAY" >/dev/null 2>&1
 
 exit 0

@@ -5,6 +5,11 @@ min_herdr_version = "0.7.0"
 description = "Push agent status to a remote dashboard for mobile monitoring and one-tap approval"
 platforms = ["macos", "linux"]
 
+[[actions]]
+id = "test"
+title = "Test push to relay"
+command = ["sh", "test.sh"]
+
 [[events]]
 on = "pane.agent_status_changed"
 command = ["sh", "on_event.sh"]
