@@ -1,6 +1,6 @@
 # herdr-push
 
-herdr plugin that pushes agent status events to a remote relay for mobile and desktop monitoring.
+herdr plugin that pushes agent status events to [herdr-remote](https://github.com/dcolinmorgan/herdr-remote) for mobile and desktop monitoring.
 
 ## Install
 
@@ -13,11 +13,11 @@ herdr plugin install dcolinmorgan/herdr-push
 Set the relay URL (Cloudflare tunnel, LAN, or Tailscale):
 
 ```bash
-export HERDI_RELAY_HOST="wss://your-tunnel.trycloudflare.com"
+export HERDR_RELAY="wss://your-tunnel.trycloudflare.com"
 # or LAN:
-export HERDI_RELAY_HOST="ws://192.168.1.x:8375"
+export HERDR_RELAY="http://192.168.1.x:8375"
 
-launchctl setenv HERDI_RELAY_HOST "$HERDI_RELAY_HOST"  # macOS
+launchctl setenv HERDR_RELAY "$HERDR_RELAY"  # macOS
 herdr server reload-config
 ```
 
@@ -25,20 +25,16 @@ No herdr restart required.
 
 ## How it works
 
-On every agent status change (`idle` → `working` → `blocked`), this plugin pushes the event to your relay. The relay broadcasts to connected clients:
+On every agent status change (`idle` → `working` → `blocked`), this plugin pushes the event via HTTP POST (just curl — zero external deps) to your relay.
 
-- 📱 iOS app
-- 🖥️ macOS menu bar app ([herdr-remote](https://github.com/dcolinmorgan/herdr-remote))
+The relay broadcasts to connected clients:
+
+- 🖥️ macOS menu bar app
 - 💬 Telegram bot
 - 🖲️ Terminal TUI
 
-Event-driven — no polling, no SSH, no inbound ports required on the monitored machine.
+Event-driven — no polling, no SSH, no inbound ports on the monitored machine.
 
-## Requirements
+## Zero dependencies
 
-- `websockets` Python package (for `ws://` or `wss://` relay)
-- Or nothing extra (falls back to UDP for local relay)
-
-```bash
-pip install websockets
-```
+Uses `curl` for HTTP POST. No pip packages needed. Falls back to UDP for local relay.
