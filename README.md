@@ -1,6 +1,6 @@
 # herdr-push
 
-herdr plugin that pushes agent status events to [herdr-remote](https://github.com/dcolinmorgan/herdr-remote) for mobile and desktop monitoring.
+herdr plugin that pushes agent status events to [herdr-remote](https://github.com/dcolinmorgan/herdr-remote) for mobile and desktop monitoring + approval.
 
 ## Install
 
@@ -10,31 +10,39 @@ herdr plugin install dcolinmorgan/herdr-push
 
 ## Configure
 
-Set the relay URL (Cloudflare tunnel, LAN, or Tailscale):
+Set the relay URL and reload:
 
 ```bash
-export HERDR_RELAY="wss://your-tunnel.trycloudflare.com"
-# or LAN:
-export HERDR_RELAY="http://192.168.1.x:8375"
-
-launchctl setenv HERDR_RELAY "$HERDR_RELAY"  # macOS
+export HERDR_RELAY="https://your-tunnel.trycloudflare.com"
+launchctl setenv HERDR_RELAY "$HERDR_RELAY"  # macOS persist
 herdr server reload-config
 ```
 
-No herdr restart required.
+**Quick tunnel** (no account needed):
+```bash
+# On the machine running herdr-remote relay:
+cloudflared tunnel --url http://localhost:8375
+```
 
 ## How it works
 
-On every agent status change (`idle` → `working` → `blocked`), this plugin pushes the event via HTTP POST (just curl — zero external deps) to your relay.
+```
+herdr agent status changes → plugin fires → curl POST to relay → clients notified
+```
 
-The relay broadcasts to connected clients:
-
-- 🖥️ macOS menu bar app
-- 💬 Telegram bot
-- 🖲️ Terminal TUI
-
-Event-driven — no polling, no SSH, no inbound ports on the monitored machine.
+On every status change (`idle` → `working` → `blocked`), this plugin POSTs the event to your relay. Connected clients can then approve or respond to blocked agents.
 
 ## Zero dependencies
 
-Uses `curl` for HTTP POST. No pip packages needed. Falls back to UDP for local relay.
+Uses `curl` + `python3` or `jq` (whichever is available) for JSON. Nothing to `pip install`.
+
+## What's herdr-remote?
+
+The relay + client suite that receives events from this plugin:
+
+- 🖥️ macOS menu bar app — see agents, approve with one click
+- 💬 Telegram bot — approve from your phone
+- 🖲️ Terminal TUI — kanban dashboard in your terminal
+- 📱 iOS app (coming)
+
+Install: [github.com/dcolinmorgan/herdr-remote](https://github.com/dcolinmorgan/herdr-remote)

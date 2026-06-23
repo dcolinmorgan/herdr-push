@@ -1,10 +1,10 @@
 id = "herdr.push"
 name = "Herdr Push"
-version = "0.1.0"
+version = "0.2.0"
 min_herdr_version = "0.7.0"
 description = "Push agent status to a remote dashboard for mobile monitoring and one-tap approval"
 platforms = ["macos", "linux"]
 
 [[events]]
 on = "pane.agent_status_changed"
-command = ["python3", "on_event.py"]
+command = ["sh", "on_event.sh"]
