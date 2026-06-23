@@ -1,8 +1,8 @@
-id = "herdi.push"
-name = "Herdi Push"
+id = "herdr.remote"
+name = "Herdr Remote"
 version = "0.1.0"
 min_herdr_version = "0.7.0"
-description = "Push agent status to herdi for mobile/remote monitoring"
+description = "Push agent status to a remote relay for mobile/desktop monitoring"
 platforms = ["macos", "linux"]
 
 [[events]]

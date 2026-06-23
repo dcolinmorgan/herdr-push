@@ -1,20 +1,20 @@
-# herdi-push
+# herdr-remote
 
-herdr plugin that pushes agent status events to [herdi](https://github.com/dcolinmorgan/herdi) for mobile and remote monitoring.
+herdr plugin that pushes agent status events to a remote relay for mobile and desktop monitoring.
 
 ## Install
 
 ```bash
-herdr plugin install dcolinmorgan/herdi-push
+herdr plugin install dcolinmorgan/herdr-remote
 ```
 
 ## Configure
 
-Set the relay URL (your herdi relay or Cloudflare tunnel):
+Set the relay URL (Cloudflare tunnel, LAN, or Tailscale):
 
 ```bash
 export HERDI_RELAY_HOST="wss://your-tunnel.trycloudflare.com"
-# or for LAN:
+# or LAN:
 export HERDI_RELAY_HOST="ws://192.168.1.x:8375"
 
 launchctl setenv HERDI_RELAY_HOST "$HERDI_RELAY_HOST"  # macOS
@@ -25,14 +25,14 @@ No herdr restart required.
 
 ## How it works
 
-On every agent status change (`idle` → `working` → `blocked`), this plugin pushes the event to your herdi relay. The relay broadcasts to all connected clients:
+On every agent status change (`idle` → `working` → `blocked`), this plugin pushes the event to your relay. The relay broadcasts to connected clients:
 
 - 📱 iOS app
-- 🖥️ macOS menu bar app
+- 🖥️ macOS menu bar app ([herdi](https://github.com/dcolinmorgan/herdi))
 - 💬 Telegram bot
 - 🖲️ Terminal TUI
 
-Event-driven — no polling, no SSH, no inbound ports required.
+Event-driven — no polling, no SSH, no inbound ports required on the monitored machine.
 
 ## Requirements
 
