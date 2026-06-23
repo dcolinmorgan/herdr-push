@@ -1,0 +1,10 @@
+id = "herdi.push"
+name = "Herdi Push"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Push agent status to herdi for mobile/remote monitoring"
+platforms = ["macos", "linux"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["python3", "on_event.py"]
