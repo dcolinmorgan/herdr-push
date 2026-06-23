@@ -1,11 +1,11 @@
-# herdr-remote
+# herdr-push
 
 herdr plugin that pushes agent status events to a remote relay for mobile and desktop monitoring.
 
 ## Install
 
 ```bash
-herdr plugin install dcolinmorgan/herdr-remote
+herdr plugin install dcolinmorgan/herdr-push
 ```
 
 ## Configure
@@ -28,7 +28,7 @@ No herdr restart required.
 On every agent status change (`idle` → `working` → `blocked`), this plugin pushes the event to your relay. The relay broadcasts to connected clients:
 
 - 📱 iOS app
-- 🖥️ macOS menu bar app ([herdi](https://github.com/dcolinmorgan/herdi))
+- 🖥️ macOS menu bar app ([herdr-remote](https://github.com/dcolinmorgan/herdr-remote))
 - 💬 Telegram bot
 - 🖲️ Terminal TUI
 
