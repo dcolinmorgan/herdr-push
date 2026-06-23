@@ -2,7 +2,7 @@ id = "herdr.push"
 name = "Herdr Push"
 version = "0.1.0"
 min_herdr_version = "0.7.0"
-description = "Push agent status to a remote relay for mobile/desktop monitoring"
+description = "Push agent status to a remote dashboard for mobile monitoring and one-tap approval"
 platforms = ["macos", "linux"]
 
 [[events]]
