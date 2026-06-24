@@ -28,7 +28,8 @@ HOST=$(hostname -s)
 PAYLOAD="{\"type\":\"agent_event\",\"pane_id\":\"test-$$\",\"status\":\"blocked\",\"agent\":\"test\",\"project\":\"test-project\",\"cwd\":\"/tmp/test\",\"host\":\"$HOST\"}"
 
 echo "→ Pushing to $HTTP_RELAY"
-STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d "$PAYLOAD" --max-time 5 "$HTTP_RELAY")
+ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$PAYLOAD" 2>/dev/null || printf '%s' "$PAYLOAD" | jq -sRr @uri 2>/dev/null)
+STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${HTTP_RELAY}/push?d=${ENCODED}")
 
 if [ "$STATUS" = "200" ]; then
     echo "✓ Success! Test agent should appear on your dashboard."

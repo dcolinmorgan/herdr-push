@@ -52,7 +52,10 @@ fi
 
 [ -z "$PAYLOAD" ] && exit 0
 
-# POST to relay (convert ws:// → http:// if needed)
+# POST to relay (encode payload in query param for compatibility)
 HTTP_RELAY=$(echo "$RELAY" | sed 's|^ws://|http://|;s|^wss://|https://|')
-curl -s -X POST -H "Content-Type: application/json" -d "$PAYLOAD" --max-time 5 "$HTTP_RELAY" >/dev/null 2>&1
+ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$PAYLOAD" 2>/dev/null || \
+          printf '%s' "$PAYLOAD" | jq -sRr @uri 2>/dev/null || \
+          printf '%s' "$PAYLOAD" | sed 's/ /%20/g;s/{/%7B/g;s/}/%7D/g;s/"/%22/g;s/:/%3A/g;s/,/%2C/g')
+curl -s --max-time 5 "${HTTP_RELAY}/push?d=${ENCODED}" >/dev/null 2>&1
 exit 0
