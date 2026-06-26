@@ -56,8 +56,8 @@ Then open [herdr-remote.pages.dev](https://herdr-remote.pages.dev) on your phone
 
 ## What you get
 
-- 📱 Approve blocked agents from your phone
-- 🖥️ macOS menu bar status + approval
-- 💬 Telegram bot with inline buttons (works on Apple Watch)
-- 🔔 Browser notifications when agents need you
-- 🎨 11 themes
+- Approve blocked agents from your phone
+- macOS menu bar status + approval
+- Telegram bot with inline buttons (works on Apple Watch)
+- Browser notifications when agents need you
+- 11 themes
