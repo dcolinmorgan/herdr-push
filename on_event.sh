@@ -8,6 +8,12 @@ if [ -z "$HERDR_RELAY" ] && [ -n "$HERDR_PLUGIN_CONFIG_DIR" ] && [ -f "$HERDR_PL
     export HERDR_RELAY
 fi
 
+# Optional shared-secret token (matches HERDR_RELAY_TOKEN on the relay)
+if [ -z "$HERDR_RELAY_TOKEN" ] && [ -n "$HERDR_PLUGIN_CONFIG_DIR" ] && [ -f "$HERDR_PLUGIN_CONFIG_DIR/.env" ]; then
+    HERDR_RELAY_TOKEN=$(grep '^HERDR_RELAY_TOKEN=' "$HERDR_PLUGIN_CONFIG_DIR/.env" | cut -d= -f2- | tr -d '"' | tr -d "'")
+    export HERDR_RELAY_TOKEN
+fi
+
 RELAY="${HERDR_RELAY:-}"
 [ -z "$RELAY" ] && exit 0
 
@@ -57,5 +63,7 @@ HTTP_RELAY=$(echo "$RELAY" | sed 's|^ws://|http://|;s|^wss://|https://|')
 ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$PAYLOAD" 2>/dev/null || \
           printf '%s' "$PAYLOAD" | jq -sRr @uri 2>/dev/null || \
           printf '%s' "$PAYLOAD" | sed 's/ /%20/g;s/{/%7B/g;s/}/%7D/g;s/"/%22/g;s/:/%3A/g;s/,/%2C/g')
-curl -s --max-time 5 "${HTTP_RELAY}/push?d=${ENCODED}" >/dev/null 2>&1
+URL="${HTTP_RELAY}/push?d=${ENCODED}"
+[ -n "$HERDR_RELAY_TOKEN" ] && URL="${URL}&token=${HERDR_RELAY_TOKEN}"
+curl -s --max-time 5 "$URL" >/dev/null 2>&1
 exit 0

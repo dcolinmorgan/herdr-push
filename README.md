@@ -22,6 +22,18 @@ launchctl setenv HERDR_RELAY "$HERDR_RELAY"
 herdr server reload-config
 ```
 
+### Optional: token auth
+
+If your relay sets a shared secret (`HERDR_RELAY_TOKEN`), set the same value here so
+pushes are authorized — otherwise the relay rejects them with `401 Unauthorized`:
+
+```bash
+echo 'HERDR_RELAY_TOKEN=your-shared-secret' >> "$(herdr plugin config-dir herdr.push)/.env"
+```
+
+The token is sent as a `?token=` query param on each push (the relay also accepts it
+via an `Authorization: Bearer` header).
+
 ## Test
 
 ```bash

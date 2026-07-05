@@ -9,6 +9,11 @@ if [ -z "$RELAY" ] && [ -n "$HERDR_PLUGIN_CONFIG_DIR" ] && [ -f "$HERDR_PLUGIN_C
     RELAY=$(grep '^HERDR_RELAY=' "$HERDR_PLUGIN_CONFIG_DIR/.env" | cut -d= -f2- | tr -d '"' | tr -d "'")
 fi
 
+# Optional shared-secret token (matches HERDR_RELAY_TOKEN on the relay)
+if [ -z "$HERDR_RELAY_TOKEN" ] && [ -n "$HERDR_PLUGIN_CONFIG_DIR" ] && [ -f "$HERDR_PLUGIN_CONFIG_DIR/.env" ]; then
+    HERDR_RELAY_TOKEN=$(grep '^HERDR_RELAY_TOKEN=' "$HERDR_PLUGIN_CONFIG_DIR/.env" | cut -d= -f2- | tr -d '"' | tr -d "'")
+fi
+
 if [ -z "$RELAY" ]; then
     echo "✗ HERDR_RELAY not set."
     echo ""
@@ -29,7 +34,9 @@ PAYLOAD="{\"type\":\"agent_event\",\"pane_id\":\"test-$$\",\"status\":\"blocked\
 
 echo "→ Pushing to $HTTP_RELAY"
 ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$PAYLOAD" 2>/dev/null || printf '%s' "$PAYLOAD" | jq -sRr @uri 2>/dev/null)
-STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "${HTTP_RELAY}/push?d=${ENCODED}")
+URL="${HTTP_RELAY}/push?d=${ENCODED}"
+[ -n "$HERDR_RELAY_TOKEN" ] && URL="${URL}&token=${HERDR_RELAY_TOKEN}"
+STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$URL")
 
 if [ "$STATUS" = "200" ]; then
     echo "✓ Success! Test agent should appear on your dashboard."
