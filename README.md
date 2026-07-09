@@ -52,7 +52,7 @@ cd herdr-remote/relay && ./start.sh
 # → prints wss:// URL
 ```
 
-Then open [herdr-remote.pages.dev](https://herdr-remote.pages.dev) on your phone and paste the URL.
+Then open [herdr-demo.pages.dev](https://herdr-demo.pages.dev) on your phone and paste the URL.
 
 ## What you get
 
